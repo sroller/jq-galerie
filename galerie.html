@@ -1,0 +1,79 @@
+<!DOCTYPE html5>
+<html>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+		<title>Galerie</title>
+	</head>
+	<body>
+		<h1>Galerie</h1>
+		<button id="start">Start</button>
+		<button id="minus10">-10</button>
+		<button id="minus">-1</button>
+		<button id="plus">+1</button>
+		<button id="plus10">+10</button>
+		<button id="last">Last</button>
+		<div id="img_name"></div>
+		<hr />
+		<img id="bild" src="http://placehold.it/1280x720" />
+		<hr />
+		<a href="/">Home</a>
+	</body>
+
+<script>
+	var url = "/timelapse/20170424/20170424-0015";
+	var url = "/timelapse/" + location.toString().split("?")[1];
+	var maxIndex = 0;
+	var currIndex = 0;
+
+	function setImage(index) {
+		if (index == 999999) { currIndex = maxIndex };
+		if (index == 0) { currIndex = 0 };
+		currIndex = currIndex + index;
+		if (currIndex < 0) { currIndex = 0; }
+		var s = "000000" + currIndex.toString();
+		var img_name = "tl"+s.slice(-6)+".jpg";
+		var img_url = url+'/tl'+s.slice(-6)+".jpg";
+		console.log("setImage(" + img_url + ")");
+		$('#bild').attr('src', img_url);
+		$('#bild').attr('title', img_url);
+		$('#img_name').text(img_name);
+	}
+
+
+function createImageArray(url) {
+	$.ajax({
+		url: url,
+		success: function (data) {
+			d = $(data).find("a").filter(function(i, e) { 
+				return /tl\d{6}\.jpg$/.test(e.href);
+			});
+			console.log("d="+d.length);
+			$('#bild').attr('src', url+'/'+d[d.length-1].outerText);
+			$('#bild').attr('title', d[d.length-1].outerText);
+			maxIndex = d.length;
+			currIndex = maxIndex;
+		}
+	})
+	.done(function() {
+		console.log("success");
+	})
+	.fail(function() {
+		console.log("error");
+	})
+	.always(function() {
+		console.log("fertig");
+	});
+}
+
+console.log("URL="+url);
+createImageArray(url);
+$("#start").click(function() { setImage(0)});
+$("#last").click(function() { setImage(999999) });
+$("#plus").click(function() { setImage(+1) });
+$("#plus10").click(function() { setImage(+10) });
+$("#minus").click(function() { setImage(-1) });
+$("#minus10").click(function() { setImage(-10) });
+
+</script>
+
+</html>
