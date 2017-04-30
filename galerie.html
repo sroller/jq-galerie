@@ -6,13 +6,14 @@
 	</head>
 	<body>
 		<h1>Galerie</h1>
-		<button id="start">Start</button>
-		<button id="minus10">-10</button>
-		<button id="minus">-1</button>
-		<button id="plus">+1</button>
-		<button id="plus10">+10</button>
-		<button id="last">Last</button>
-		<div id="img_name"></div>
+		<button id="start" disabled>Start</button>
+		<button id="minus10" disabled>-10</button>
+		<button id="minus" disabled>-1</button>
+		<button id="plus" disabled>+1</button>
+		<button id="plus10" disabled>+10</button>
+		<button id="last" disabled>Last</button>
+		<button id="reload" disabled>Reload</button>
+		<div id="img_name">[img_name]</div>
 		<hr />
 		<img id="bild" src="http://placehold.it/1280x720" />
 		<hr />
@@ -20,23 +21,33 @@
 	</body>
 
 <script>
-	var url = "/timelapse/" + location.toString().split("?")[1];
-	var maxIndex = 0;
-	var currIndex = 0;
+// cut off last element of url
+var base_url = location.toString().split("?")[0].split("/").slice(0,-1).join("/");
+var url = location.toString().split("?")[1];
+var maxIndex = 0;
+var currIndex = 0;
 
-	function setImage(index) {
-		if (index == 999999) { currIndex = maxIndex };
-		if (index == 0) { currIndex = 0 };
-		currIndex = currIndex + index;
-		if (currIndex < 0) { currIndex = 0; }
-		var s = "000000" + currIndex.toString();
-		var img_name = "tl"+s.slice(-6)+".jpg";
-		var img_url = url+'/tl'+s.slice(-6)+".jpg";
-		console.log("setImage(" + img_url + ")");
-		$('#bild').attr('src', img_url);
-		$('#bild').attr('title', img_url);
-		$('#img_name').text(img_name);
+function setImage(d, index, url) {
+	if (index == 999999) {
+		currIndex = maxIndex;
+	} else if (index == 0) {
+		currIndex = 0;
 	}
+
+	currIndex = currIndex + index;
+
+	if (currIndex < 0) {
+		currIndex = 0;
+	}
+	if (currIndex > maxIndex) {
+		currIndex = maxIndex;
+	}
+	var img_name = d[currIndex].text;
+	var img_url = url+'/'+d[currIndex].text;
+	$('#bild').attr('src', img_url);
+	$('#bild').attr('title', img_url);
+	$('#img_name').text(img_name);
+}
 
 
 function createImageArray(url) {
@@ -44,34 +55,41 @@ function createImageArray(url) {
 		url: url,
 		success: function (data) {
 			d = $(data).find("a").filter(function(i, e) { 
-				return /tl\d{6}\.jpg$/.test(e.href);
+				// return /tl\d{6}\.jpg$/.test(e.text);
+				return /\.jpg$/.test(e.text);
 			});
-			console.log("d="+d.length);
-			$('#bild').attr('src', url+'/'+d[d.length-1].outerText);
-			$('#bild').attr('title', d[d.length-1].outerText);
-			maxIndex = d.length;
+			// console.log("d="+d.length);
+			maxIndex = d.length - 1;
 			currIndex = maxIndex;
+			setImage(d, maxIndex, url);
+			$("#start").click(function() { setImage(d, 0, url)}).prop('disabled', false);
+			$("#last").click(function() { setImage(d, 999999, url) }).prop('disabled', false);
+			$("#plus").click(function() { setImage(d, +1, url) }).prop('disabled', false);
+			$("#plus10").click(function() { setImage(d, +10, url) }).prop('disabled', false);
+			$("#minus").click(function() { setImage(d, -1, url) }).prop('disabled', false);
+			$("#minus10").click(function() { setImage(d, -10, url) }).prop('disabled', false);
+			$("#reload").click(function() { createImageArray(url); }).prop('disabled', false);
 		}
 	})
 	.done(function() {
-		console.log("success");
+		// console.log("success");
 	})
 	.fail(function() {
-		console.log("error");
+		// console.log("error");
+		alert("error fetching " + url);
 	})
 	.always(function() {
-		console.log("fertig");
+		// console.log("fertig");
 	});
 }
 
 console.log("URL="+url);
-createImageArray(url);
-$("#start").click(function() { setImage(0)});
-$("#last").click(function() { setImage(999999) });
-$("#plus").click(function() { setImage(+1) });
-$("#plus10").click(function() { setImage(+10) });
-$("#minus").click(function() { setImage(-1) });
-$("#minus10").click(function() { setImage(-10) });
+console.log("base_url="+base_url);
+if (url === undefined) {
+	createImageArray(base_url);
+} else {
+	createImageArray(url);
+}
 
 </script>
 
