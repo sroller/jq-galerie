@@ -3,13 +3,23 @@
 	<head>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 		<title>Galerie</title>
+
 <style>
-img {
-width: 1280px;
-height: 720px;
-background: url("/jq-galerie/4-segment-spinner.gif") 50% 50% no-repeat rgb(224,224, 224);
-}
+	#main {
+		width: 1280px;
+		height: 720px;
+	}
+
+	#spin {
+		position: relative;
+		bottom: 360px;
+		right: 640px;
+		width: 100px;
+		height: 100px;
+		z-index: -1;
+	}
 </style>
+
 	</head>
 	<body>
 		<h1>Galerie</h1>
@@ -24,8 +34,10 @@ background: url("/jq-galerie/4-segment-spinner.gif") 50% 50% no-repeat rgb(224,2
 		<button id="reload" disabled>Reload</button>
 		<div id="img_description">[img_description]</div>
 		<hr />
-		<!-- img id="bild" src="http://placehold.it/1280x720" / -->
-		<img id="bild" />
+		<div id="container">
+			<img id="main" src="http://placehold.it/1280x720" />
+			<img id="spin" src="/jq-galerie/4-segment-spinner.gif" />
+		</div>
 		<hr />
 		<a href="/">Home</a>
 	</body>
@@ -52,18 +64,23 @@ function setImage(d, index, url) {
 	if (currIndex > maxIndex) {
 		currIndex = maxIndex;
 	}
-$("#bild").attr('src', '');
+
+	// load picture dynamically
 	var img_desc = "file: "+d[currIndex].pname + ", taken at " + d[currIndex].ptime;
 	var img_url = url+'/'+d[currIndex].pname;
-var image = document.getElementById('bild');
-var downloadingImage = new Image();
-downloadingImage.onload = function(){
-	image.src = this.src;
-};
-downloadingImage.src = img_url;
-	 // $('#bild').attr('src', img_url);
-	$('#bild').attr('title', img_url);
-	$('#img_description').text(img_desc);
+	var image = document.getElementById('main');
+	var downloadingImage = new Image();
+  var pos = $('#main').position();
+
+	
+	$('#spin').css('z-index', 9999);
+	downloadingImage.onload = function(){
+		image.src = this.src;
+		$('#spin').css('z-index', -1);
+		$('#main').attr('title', img_url);
+		$('#img_description').text(img_desc);
+	};
+	downloadingImage.src = img_url;
 }
 
 
