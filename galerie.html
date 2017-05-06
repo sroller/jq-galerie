@@ -5,44 +5,55 @@
 		<title>Galerie</title>
 
 <style>
+	#container {
+		position: relative;
+		width: 1280px;
+		height: 720px;
+	}
+
 	#main {
 		width: 1280px;
 		height: 720px;
 	}
 
 	#spin {
-		position: relative;
-		bottom: 360px;
-		right: 640px;
-		width: 100px;
-		height: 100px;
-		z-index: -1;
+		position: absolute;
+		left: 560px;
+		bottom: 20px;
+		width: 160px;
+		height: 24px;
+		z-index: 999;
 	}
 </style>
 
 	</head>
 	<body>
 		<h1>Galerie</h1>
-		<button id="start" disabled>Start</button>
-		<button id="minus100" disabled>-100</button>
-		<button id="minus10" disabled>-10</button>
-		<button id="minus" disabled>-1</button>
-		<button id="plus" disabled>+1</button>
-		<button id="plus10" disabled>+10</button>
-		<button id="plus100" disabled>+100</button>
-		<button id="last" disabled>Last</button>
-		<button id="reload" disabled>Reload</button>
+		<button id="start" class="nav-btn" data-index=0 disabled>Start</button>
+		<button id="minus100" class="nav-btn" data-index=-100 disabled>-100</button>
+		<button id="minus10" class="nav-btn" data-index=-10 disabled>-10</button>
+		<button id="minus" class="nav-btn" data-index=-1 disabled>-1</button>
+		<button id="plus" class="nav-btn" data-index=1 disabled>+1</button>
+		<button id="plus10" class="nav-btn" data-index=10 disabled>+10</button>
+		<button id="plus100" class="nav-btn" data-index=100 disabled>+100</button>
+		<button id="last" class="nav-btn" data-index=9999 disabled>Last</button>
+		<button id="reload" class="nav-btn" disabled>Reload</button>
 		<div id="img_description">[img_description]</div>
 		<hr />
 		<div id="container">
 			<img id="main" src="http://placehold.it/1280x720" />
-			<img id="spin" src="/jq-galerie/4-segment-spinner.gif" />
+			<img id="spin" src="/jq-galerie/fading-squares.svg" />
 		</div>
 		<hr />
 		<a href="/">Home</a>
 	</body>
 
 <script>
+
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // cut off last element of url
 var base_url = location.toString().split("?")[0].split("/").slice(0,-1).join("/");
 var url = location.toString().split("?")[1];
@@ -74,11 +85,14 @@ function setImage(d, index, url) {
 
 	
 	$('#spin').css('z-index', 9999);
+  $(".nav-btn").prop("disabled", true);
+  // await sleep(2000);
 	downloadingImage.onload = function(){
 		image.src = this.src;
 		$('#spin').css('z-index', -1);
 		$('#main').attr('title', img_url);
 		$('#img_description').text(img_desc);
+		$('.nav-btn').prop('disabled', false);
 	};
 	downloadingImage.src = img_url;
 }
@@ -108,6 +122,7 @@ function createImageArray(url) {
 			maxIndex = d.length - 1;
 			currIndex = maxIndex;
 			setImage(d, maxIndex, url);
+			// $(".nav-btn").click(function() { setImage(d, this.getAttribute("data-index"), url)}).prop('disabled', false);
 			$("#start").click(function() { setImage(d, 0, url)}).prop('disabled', false);
 			$("#last").click(function() { setImage(d, 999999, url) }).prop('disabled', false);
 			$("#plus").click(function() { setImage(d, +1, url) }).prop('disabled', false);
