@@ -1,57 +1,57 @@
 <!DOCTYPE html5>
 <html>
-	<head>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-		<title>Galerie</title>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <title>Galerie</title>
 
 <style>
-	#container {
-		position: relative;
-		width: 1280px;
-		height: 720px;
-	}
+    #container {
+        position: relative;
+        width: 1280px;
+        height: 720px;
+    }
 
-	#main {
-		width: 1280px;
-		height: 720px;
-	}
+    #main {
+        width: 1280px;
+        height: 720px;
+    }
 
-	#spin {
-		position: absolute;
-		left: 560px;
-		bottom: 20px;
-		width: 160px;
-		height: 24px;
-		z-index: 999;
-	}
+    #spin {
+        position: absolute;
+        left: 560px;
+        bottom: 20px;
+        width: 160px;
+        height: 24px;
+        z-index: 999;
+    }
 </style>
 
-	</head>
-	<body>
-		<h1>Galerie</h1>
-		<button id="start" class="nav-btn" data-index=0 disabled>Start</button>
-		<button id="minus100" class="nav-btn" data-index=-100 disabled>-100</button>
-		<button id="minus10" class="nav-btn" data-index=-10 disabled>-10</button>
-		<button id="minus" class="nav-btn" data-index=-1 disabled>-1</button>
-		<button id="plus" class="nav-btn" data-index=1 disabled>+1</button>
-		<button id="plus10" class="nav-btn" data-index=10 disabled>+10</button>
-		<button id="plus100" class="nav-btn" data-index=100 disabled>+100</button>
-		<button id="last" class="nav-btn" data-index=9999 disabled>Last</button>
-		<button id="reload" class="nav-btn" disabled>Reload</button>
-		<div id="img_description">[img_description]</div>
-		<hr />
-		<div id="container">
-			<img id="main" src="http://placehold.it/1280x720" />
-			<img id="spin" src="/jq-galerie/fading-squares.svg" />
-		</div>
-		<hr />
-		<a href="/">Home</a>
-	</body>
+    </head>
+    <body>
+        <h1>Galerie</h1>
+        <button id="start" class="nav-btn" data-index=0 disabled>Start</button>
+        <button id="minus100" class="nav-btn" data-index=-100 disabled>-100</button>
+        <button id="minus10" class="nav-btn" data-index=-10 disabled>-10</button>
+        <button id="minus" class="nav-btn" data-index=-1 disabled>-1</button>
+        <button id="plus" class="nav-btn" data-index=1 disabled>+1</button>
+        <button id="plus10" class="nav-btn" data-index=10 disabled>+10</button>
+        <button id="plus100" class="nav-btn" data-index=100 disabled>+100</button>
+        <button id="last" class="nav-btn" data-index=9999 disabled>Last</button>
+        <button id="reload" class="nav-btn" disabled>Reload</button>
+        <div id="img_description">[img_description]</div>
+        <hr />
+        <div id="container">
+            <img id="main" src="//placehold.it/1280x720" />
+            <img id="spin" src="/jq-galerie/fading-squares.svg" />
+        </div>
+        <hr />
+        <a href="/">Home</a>
+    </body>
 
 <script>
 
 function sleep(ms) {
-	return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // cut off last element of url
@@ -61,97 +61,101 @@ var maxIndex = 0;
 var currIndex = 0;
 
 function setImage(d, index, url) {
-	if (index == 999999) {
-		currIndex = maxIndex;
-	} else if (index == 0) {
-		currIndex = 0;
-	}
+    console.log("jump "+index);
+    if (index == 999999) {
+        currIndex = maxIndex;
+    } else if (index == 0) {
+        currIndex = 0;
+    }
 
-	currIndex = currIndex + index;
+    currIndex = currIndex + index;
 
-	if (currIndex < 0) {
-		currIndex = 0;
-	}
-	if (currIndex > maxIndex) {
-		currIndex = maxIndex;
-	}
+    if (currIndex < 0) {
+        currIndex = 0;
+    }
+    if (currIndex > maxIndex) {
+        currIndex = maxIndex;
+    }
 
-	// load picture dynamically
-	var img_desc = "file: "+d[currIndex].pname + ", taken at " + d[currIndex].ptime;
-	var img_url = url+'/'+d[currIndex].pname;
-	var image = document.getElementById('main');
-	var downloadingImage = new Image();
-  var pos = $('#main').position();
+    console.log("set currIndex to " + currIndex);
 
-	
-	$('#spin').css('z-index', 9999);
-  $(".nav-btn").prop("disabled", true);
-  // await sleep(2000);
-	downloadingImage.onload = function(){
-		image.src = this.src;
-		$('#spin').css('z-index', -1);
-		$('#main').attr('title', img_url);
-		$('#img_description').text(img_desc);
-		$('.nav-btn').prop('disabled', false);
-	};
-	downloadingImage.src = img_url;
+    // load picture dynamically
+    var img_desc = "file: "+d[currIndex].pname + ", taken at " + d[currIndex].ptime;
+    var img_url = url+'/'+d[currIndex].pname;
+    var image = document.getElementById('main');
+    var downloadingImage = new Image();
+    var pos = $('#main').position();
+
+    
+    $('#spin').css('z-index', 9999);
+    $(".nav-btn").prop("disabled", true);
+    // await sleep(2000);
+    downloadingImage.onload = function(){
+        image.src = this.src;
+        $('#spin').css('z-index', -1);
+        $('#main').attr('title', img_url);
+        $('#img_description').text(img_desc);
+        $('.nav-btn').prop('disabled', false);
+    };
+    downloadingImage.src = img_url;
 }
 
 
 function createImageArray(url) {
-	$.ajax({
-		url: url,
-		success: function (data) {
-/*
-			d = $(data).find("a").filter(function(i, e) { 
-				// return /tl\d{6}\.jpg$/.test(e.text);
-				return /\.jpg$/.test(e.text);
-			});
-*/
-			console.dir(data.split("\n").filter(function(e) { return /\.jpg"/.test(e); }));
-			d = data.split("\n").map(
-																function(e) {
-																	var reg;
-																	reg = e.match(/href="(.+?\.jpg)".+?(\d+-\w{3}-20\d{2}) (\d{2}:\d{2})/);
-																	if (reg) {
-																		return { pname: reg[1], pday: reg[2], ptime: reg[3] };
-																  };
-																}
-			).filter(function(e) { return e; });
-			console.log("d="+d.length);
-			maxIndex = d.length - 1;
-			currIndex = maxIndex;
-			setImage(d, maxIndex, url);
-			// $(".nav-btn").click(function() { setImage(d, this.getAttribute("data-index"), url)}).prop('disabled', false);
-			$("#start").click(function() { setImage(d, 0, url)}).prop('disabled', false);
-			$("#last").click(function() { setImage(d, 999999, url) }).prop('disabled', false);
-			$("#plus").click(function() { setImage(d, +1, url) }).prop('disabled', false);
-			$("#plus10").click(function() { setImage(d, +10, url) }).prop('disabled', false);
-			$("#plus100").click(function() { setImage(d, +100, url) }).prop('disabled', false);
-			$("#minus").click(function() { setImage(d, -1, url) }).prop('disabled', false);
-			$("#minus10").click(function() { setImage(d, -10, url) }).prop('disabled', false);
-			$("#minus100").click(function() { setImage(d, -100, url) }).prop('disabled', false);
-			$("#reload").click(function() { createImageArray(url); }).prop('disabled', false);
-		}
-	})
-	.done(function() {
-		// console.log("success");
-	})
-	.fail(function() {
-		// console.log("error");
-		alert("error fetching " + url);
-	})
-	.always(function() {
-		// console.log("fertig");
-	});
+    $.ajax({
+        url: url,
+        success: function (data) {
+            /*
+               d = $(data).find("a").filter(function(i, e) { 
+            // return /tl\d{6}\.jpg$/.test(e.text);
+            return /\.jpg$/.test(e.text);
+            });
+             */
+            console.dir(data.split("\n").filter(function(e) { return /\.jpg"/.test(e); }));
+            d = data.split("\n").map(
+                    function(e) {
+                        var reg;
+                        reg = e.match(/href="(.+?\.jpg)".+?(\d+-\w{3}-20\d{2}) (\d{2}:\d{2})/);
+                        if (reg) {
+                            return { pname: reg[1], pday: reg[2], ptime: reg[3] };
+                        };
+                    }
+                    ).filter(function(e) { return e; });
+            console.log(d.length + " pictures found");
+            maxIndex = d.length - 1;
+            console.log("maxIndex is " + maxIndex);
+            // currIndex = maxIndex;
+            setImage(d, maxIndex, url);
+            // $(".nav-btn").click(function() { setImage(d, this.getAttribute("data-index"), url)}).prop('disabled', false);
+            $("#start").click(function() { setImage(d, 0, url)}).prop('disabled', false);
+            $("#last").click(function() { setImage(d, 999999, url) }).prop('disabled', false);
+            $("#plus").click(function() { setImage(d, +1, url) }).prop('disabled', false);
+            $("#plus10").click(function() { setImage(d, +10, url) }).prop('disabled', false);
+            $("#plus100").click(function() { setImage(d, +100, url) }).prop('disabled', false);
+            $("#minus").click(function() { setImage(d, -1, url) }).prop('disabled', false);
+            $("#minus10").click(function() { setImage(d, -10, url) }).prop('disabled', false);
+            $("#minus100").click(function() { setImage(d, -100, url) }).prop('disabled', false);
+            $("#reload").click(function() { createImageArray(url); }).prop('disabled', false);
+        }
+    })
+    .done(function() {
+        // console.log("success");
+    })
+    .fail(function() {
+        // console.log("error");
+        alert("error fetching " + url);
+    })
+    .always(function() {
+        // console.log("fertig");
+    });
 }
 
 console.log("URL="+url);
 console.log("base_url="+base_url);
 if (url === undefined) {
-	createImageArray(base_url);
+    createImageArray(base_url);
 } else {
-	createImageArray(url);
+    createImageArray(url);
 }
 
 </script>
