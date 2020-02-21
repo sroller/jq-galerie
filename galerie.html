@@ -1,6 +1,7 @@
-<!DOCTYPE html5>
+<!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8"/>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
         <title>Galerie</title>
 
@@ -24,6 +25,15 @@
         height: 24px;
         z-index: 999;
     }
+
+    .overlay {
+      position: relative;
+      color: Blue;
+      left: 1123px;
+      bottom: 710px;
+      font-family: monospace;
+    }
+
 </style>
 
     </head>
@@ -38,11 +48,14 @@
         <button id="plus100" class="nav-btn" data-index=100 disabled>+100</button>
         <button id="last" class="nav-btn" data-index=9999 disabled>Last</button>
         <button id="reload" class="nav-btn" disabled>Reload</button>
-        <div id="img_description">[img_description]</div>
         <hr />
         <div id="container">
             <img id="main" src="//placehold.it/1280x720" />
             <img id="spin" src="/jq-galerie/fading-squares.svg" />
+            <div id="file" class="overlay">no data</div>
+            <div id="time" class="overlay">no data</div>
+            <div id="temp" class="overlay">no data</div>
+            <div id="wind" class="overlay">no data</div>
         </div>
         <hr />
         <a href="/">Home</a>
@@ -59,9 +72,82 @@ var base_url = location.toString().split("?")[0].split("/").slice(0,-1).join("/"
 var url = location.toString().split("?")[1];
 var maxIndex = 0;
 var currIndex = 0;
+var pictures = [];
+var weather_data = [];
 
-function setImage(d, index, url) {
-    console.log("jump "+index);
+function set_temperature(data) {
+  if (!data || !data['temp']) {data = {'temp':'no data'} };
+  $('#temp').text('temp: ' + data['temp'] + "°C");
+}
+
+function set_wind(data) {
+  if (!data || !data['wind']) {data = {'wind':'no data'} };
+  $('#wind').text('wind: ' + data['wind'] + " km/h");
+}
+
+// fetch day's weather data
+async function fetch_day_weather(year, month, day) {
+  let result;
+  let url = '/daily/' + parseInt(year) + '-' + ('0'+parseInt(month)).slice(-2) + '-' + ('0'+parseInt(day)).slice(-2) + '.json';
+  console.log("fetching url: %s", url);
+
+  try {
+    result = await $.getJSON(url,
+                             data => {
+                                  weather_data = data;
+                                  console.log("weather data:");
+                                  console.dir(weather_data); }).done();
+    console.log("result von await getJSON ist: " + result);
+    return result;
+  } catch(error) {
+    console.error("error in getJSON: %s", error);
+    console.dir(error);
+  }
+}
+
+function fetch_weather_data(year, month, day, hour, minute) {
+  var time_at_pic = hour * 60 + minute;
+  let data = {};
+
+  fetch_day_weather(year, month, day).then(weather_data => {
+    console.log('weather_data: %o', weather_data);
+    console.log("suche für timestamp: "+ hour + " minute: "+ minute);
+    data = weather_data[weather_data.length-1];
+    for(i=0; i < weather_data.length; i++) {
+      let measuring_point = new Date(weather_data[i].time);
+      console.log("weather_data[i]= " + JSON.stringify(weather_data[i]));
+      let tabelle_time = measuring_point.getHours()*60 + measuring_point.getMinutes(); // minutes since midnight
+      console.log("measuring_point="+measuring_point);
+      console.log(i + ': bild:' + time_at_pic + " > tabelle:" + tabelle_time);
+      if (time_at_pic < tabelle_time) {
+        console.log("match!");
+        console.log(i + ': bild:' + time_at_pic + " < tabelle:" + tabelle_time);
+        console.log("found = %o", weather_data[i]);
+        data = weather_data[i-1];
+        break;
+      }
+    }
+    console.log("data=%o", data);
+    set_temperature(data);
+    set_wind(data);
+    console.debug("i am Ende = %i", i);
+  });
+}
+
+function show_weather_overlay(picture) {
+  let wind, temp, pic_date;
+
+  $('#time').text('time: ' + picture.ptime);
+  $('#file').text('file: ' + picture.pname);
+  console.log(picture);
+  pic_date = new Date(picture.pday);
+  console.log("pic_date: %o", pic_date);
+  temp = fetch_weather_data(pic_date.getFullYear(), pic_date.getMonth()+1, pic_date.getDate(), picture.phour, picture.pminute);
+}
+
+function setImage(index, url) {
+    console.clear();
+    console.log("jump by %i", index);
     if (index == 999999) {
         currIndex = maxIndex;
     } else if (index == 0) {
@@ -80,8 +166,8 @@ function setImage(d, index, url) {
     console.log("set currIndex to " + currIndex);
 
     // load picture dynamically
-    var img_desc = "file: "+d[currIndex].pname + ", taken at " + d[currIndex].ptime;
-    var img_url = url+'/'+d[currIndex].pname;
+    // var img_desc = "file: "+pictures[currIndex].pname + ", taken at " + pictures[currIndex].ptime;
+    var img_url = url+'/'+pictures[currIndex].pname;
     var image = document.getElementById('main');
     var downloadingImage = new Image();
     var pos = $('#main').position();
@@ -94,70 +180,69 @@ function setImage(d, index, url) {
         image.src = this.src;
         $('#spin').css('z-index', -1);
         $('#main').attr('title', img_url);
-        $('#img_description').text(img_desc);
+        // $('#img_description').text(img_desc);
         $('.nav-btn').prop('disabled', false);
     };
     downloadingImage.src = img_url;
+    console.log("anzahl pictures: "+ pictures.length);
+    console.log("call show_weather_overlay");
+    show_weather_overlay(pictures[currIndex]);
 }
 
 
 function createImageArray(url) {
-    $.ajax({
-        url: url,
-        success: function (data) {
-            /*
-               d = $(data).find("a").filter(function(i, e) { 
-            // return /tl\d{6}\.jpg$/.test(e.text);
-            return /\.jpg$/.test(e.text);
-            });
-             */
-            console.dir(data.split("\n").filter(function(e) { return /\.jpg"/.test(e); }));
-            d = data.split("\n").map(
-                    function(e) {
-                        var reg;
-                        reg = e.match(/href="(.+?\.jpg)".+?(\d+-\w{3}-20\d{2}) (\d{2}:\d{2})/);
-                        if (reg) {
-                            return { pname: reg[1], pday: reg[2], ptime: reg[3] };
-                        };
-                    }
-                    ).filter(function(e) { return e; });
-            console.log(d.length + " pictures found");
-            maxIndex = d.length - 1;
-            console.log("maxIndex is " + maxIndex);
-            // currIndex = maxIndex;
-            setImage(d, maxIndex, url);
-            // $(".nav-btn").click(function() { setImage(d, this.getAttribute("data-index"), url)}).prop('disabled', false);
-            $("#start").click(function() { setImage(d, 0, url)}).prop('disabled', false);
-            $("#last").click(function() { setImage(d, 999999, url) }).prop('disabled', false);
-            $("#plus").click(function() { setImage(d, +1, url) }).prop('disabled', false);
-            $("#plus10").click(function() { setImage(d, +10, url) }).prop('disabled', false);
-            $("#plus100").click(function() { setImage(d, +100, url) }).prop('disabled', false);
-            $("#minus").click(function() { setImage(d, -1, url) }).prop('disabled', false);
-            $("#minus10").click(function() { setImage(d, -10, url) }).prop('disabled', false);
-            $("#minus100").click(function() { setImage(d, -100, url) }).prop('disabled', false);
-            $("#reload").click(function() { createImageArray(url); }).prop('disabled', false);
+  $.ajax({
+    url: url,
+    success: function (data) {
+      pictures = data.split("\n").map(
+        function(e) {
+          var reg;
+          reg = e.match(/href="(.+?\.jpg)".+?(\d+-\w{3}-20\d{2}) (\d{2}):(\d{2})/);
+          if (reg) {
+            return { pname: reg[1], pday: reg[2], ptime: reg[3]+':'+reg[4], phour: parseInt(reg[3]), pminute: parseInt(reg[4]) };
+          };
         }
-    })
+      ).filter((e) => { return e; });
+      console.log(pictures.length + " pictures found");
+      maxIndex = pictures.length - 1;
+      console.log("last pictures is " + maxIndex);
+      setImage(maxIndex, url);
+      // $(".nav-btn").click(function() { setImage(d, this.getAttribute("data-index"), url)}).prop('disabled', false);
+    }
+  })
     .done(function() {
-        // console.log("success");
+      // console.log("success");
     })
     .fail(function() {
-        // console.log("error");
-        alert("error fetching " + url);
+      // console.log("error");
+      alert("error fetching " + url);
     })
     .always(function() {
-        // console.log("fertig");
+      // console.log("fertig");
     });
 }
 
 console.log("URL="+url);
 console.log("base_url="+base_url);
 if (url === undefined) {
-    createImageArray(base_url);
-} else {
-    createImageArray(url);
+    url = base_url;
 }
+
+createImageArray(url);
+// fetch_weather_data(2018, 11, 15, pictures[0].phour, pictures[0].pminute);
+
+
+$("#start").click(function() { setImage(0, url)}).prop('disabled', false);
+$("#last").click(function() { setImage(999999, url) }).prop('disabled', false);
+$("#plus").click(function() { setImage(+1, url) }).prop('disabled', false);
+$("#plus10").click(function() { setImage(+10, url) }).prop('disabled', false);
+$("#plus100").click(function() { setImage(+100, url) }).prop('disabled', false);
+$("#minus").click(function() { setImage(-1, url) }).prop('disabled', false);
+$("#minus10").click(function() { setImage(-10, url) }).prop('disabled', false);
+$("#minus100").click(function() { setImage(-100, url) }).prop('disabled', false);
+$("#reload").click(function() { createImageArray(url); }).prop('disabled', false);
 
 </script>
 
 </html>
+
