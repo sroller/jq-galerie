@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8"/>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.8.20/dayjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.8.20/plugin/customParseFormat.js" integrity="sha256-qbwqgEUxsLZI/JHppDbDbGb0dkbVTG6e71rQ0gzR1ow=" crossorigin="anonymous"></script>
         <title>Galerie</title>
 
 <style>
@@ -88,8 +91,11 @@ function set_wind(data) {
 // fetch day's weather data
 async function fetch_day_weather(year, month, day) {
   let result;
-  let url = '/daily/' + parseInt(year) + '-' + ('0'+parseInt(month)).slice(-2) + '-' + ('0'+parseInt(day)).slice(-2) + '.json';
+  let url = '/daily/' + year + '-' + ('0'+parseInt(month)).slice(-2) + '-' + ('0'+parseInt(day)).slice(-2) + '.json';
   console.log("fetching url: %s", url);
+  console.log("year: "+year);
+  console.log("month: "+month);
+  console.log("day: "+day);
 
   try {
     result = await $.getJSON(url,
@@ -109,6 +115,7 @@ function fetch_weather_data(year, month, day, hour, minute) {
   var time_at_pic = hour * 60 + minute;
   let data = {};
 
+  console.log("in fetch_weather_data, year: "+year);
   fetch_day_weather(year, month, day).then(weather_data => {
     console.log('weather_data: %o', weather_data);
     console.log("suche für timestamp: "+ hour + " minute: "+ minute);
@@ -140,13 +147,14 @@ function show_weather_overlay(picture) {
   $('#time').text('time: ' + picture.ptime);
   $('#file').text('file: ' + picture.pname);
   console.log(picture);
-  pic_date = new Date(picture.pday);
+  pic_date = new dayjs(picture.pday, 'DD-MMM-YYYY');
   console.log("pic_date: %o", pic_date);
-  temp = fetch_weather_data(pic_date.getFullYear(), pic_date.getMonth()+1, pic_date.getDate(), picture.phour, picture.pminute);
+  console.log("in show_weather_overlay, pic_date.year()="+pic_date.year());
+  temp = fetch_weather_data(pic_date.year(), pic_date.month()+1, pic_date.date(), picture.phour, picture.pminute);
 }
 
 function setImage(index, url) {
-    console.clear();
+    // console.clear();
     console.log("jump by %i", index);
     if (index == 999999) {
         currIndex = maxIndex;
@@ -221,6 +229,10 @@ function createImageArray(url) {
       // console.log("fertig");
     });
 }
+
+// load plugin
+
+dayjs.extend(window.dayjs_plugin_customParseFormat);
 
 console.log("URL="+url);
 console.log("base_url="+base_url);
