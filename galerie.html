@@ -86,7 +86,7 @@ function set_temperature(data) {
 
 function set_wind(data) {
   if (!data || !data['wind']) {data = {'wind':'no data'} };
-  $('#wind').text('wind: ' + data['wind'] + " km/h");
+  $('#wind').text('wind: ' + data['wind']*3.6 + " km/h");
 }
 
 // fetch day's weather data
